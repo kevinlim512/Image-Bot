@@ -74,6 +74,32 @@ To start the development bot, use `npm run dev`. This will start the bot locally
 
 To stop the bot, press `CTRL-C`
 
+### 🚂 Hosting on Railway
+This bot can be hosted on [Railway](https://railway.com/) as a long-running Node service. It does not expose an HTTP server, so it should be deployed as an always-on worker process that runs `npm start`.
+
+#### Railway deployment steps
+1. Push this repository to GitHub.
+2. In Railway, create a new project and choose **Deploy from GitHub repo**.
+3. Select this repository.
+4. Add the following environment variables in the Railway service:
+    ```
+    CLIENT_ID=<production_client_id>
+    GUILD_ID=<production_guild_id>
+    TOKEN=<production_bot_token>
+    SERPER_API_KEY=<serper_api_key>
+    ```
+5. Deploy the service. Railway will use the checked-in [`railway.json`](railway.json) file to run the bot with `npm start`.
+6. After the deployment succeeds, open a Railway shell or run a one-off command and execute:
+    ```
+    npm run commands:prod
+    ```
+7. Wait for Discord to register the global slash commands, then test `/img` in your server.
+
+#### Notes
+- Use your production bot credentials in Railway, not the development values from your local `.env`.
+- Railway does not need a public domain for this bot because the process connects outbound to Discord.
+- If you keep the GitHub Actions workflow for command deployment, `SERPER_API_KEY` still only needs to be set in Railway for the running bot service.
+
 ### 📤 Deploying your Commands
 When you modify the name or description of your commands, or add/remove commands, the changes may not be reflected immediately after starting the bot. To get around this, you can use a GitHub Action to automatically deploy your commands when merging to `main`, or manually running a script to deploy the commands.
 

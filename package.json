@@ -6,9 +6,13 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "commands": "node deploy-commands.js dev",
+    "commands:prod": "node deploy-commands.js prod",
     "dev": "npm run commands && npm run start",
     "nodemon": "npm run commands && nodemon index.js",
     "start": "node index.js"
+  },
+  "engines": {
+    "node": "16.x"
   },
   "repository": {
     "type": "git",
