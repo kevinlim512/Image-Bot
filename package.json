@@ -5,10 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "commands": "node deploy-commands.js dev",
-    "commands:prod": "node deploy-commands.js prod",
-    "dev": "npm run commands && npm run start",
-    "nodemon": "npm run commands && nodemon index.js",
+    "commands": "node deploy-commands.js",
+    "commands:prod": "node deploy-commands.js",
+    "dev": "NODE_ENV=development npm run commands && NODE_ENV=development npm run start",
+    "nodemon": "NODE_ENV=development npm run commands && NODE_ENV=development nodemon index.js",
     "start": "node index.js"
   },
   "engines": {

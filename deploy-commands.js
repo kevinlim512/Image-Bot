@@ -4,26 +4,20 @@ const { Routes } = require('discord-api-types/v9');
 // Read environment variables
 const config = require('./env-var');
 const clientId = config.getConfig().clientId;
-const guildIds = config.getConfig().guildIds;
 const token = config.getConfig().token;
-// Get arguments from command input to determine environment state
-const args = process.argv.slice(2);
-const env_state = args[0];
 
 const commands = [];
-const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+const commandDirectories = ['./commands', './commands-dev'];
 
-for (const file of commandFiles) {
-	const command = require(`./commands/${file}`);
-	commands.push(command.data.toJSON());
-}
+for (const directory of commandDirectories) {
+	if (!fs.existsSync(directory)) {
+		continue;
+	}
 
-// Read development commands from commands-dev/ folder
-if (env_state === 'dev') {
-	const commandFilesDev = fs.readdirSync('./commands-dev').filter(file => file.endsWith('.js'));
+	const commandFiles = fs.readdirSync(directory).filter(file => file.endsWith('.js'));
 
-	for (const file of commandFilesDev) {
-		const command = require(`./commands-dev/${file}`);
+	for (const file of commandFiles) {
+		const command = require(`${directory}/${file}`);
 		commands.push(command.data.toJSON());
 	}
 }
@@ -32,32 +26,14 @@ const rest = new REST({ version: '9' }).setToken(token);
 
 (async () => {
 	try {
-		console.log(`Started refreshing ${env_state} application (/) commands with ${numCommands} command(s).`);
+		console.log(`Started refreshing global application (/) commands with ${numCommands} command(s).`);
 
-		if (env_state === 'dev') {
-			if (guildIds.length === 0) {
-				throw new Error('No GUILD_IDS or GUILD_ID configured for dev command deployment.');
-			}
+		await rest.put(
+			Routes.applicationCommands(clientId),
+			{ body: commands },
+		);
 
-			// Deploy commands to each development guild immediately
-			for (const guildId of guildIds) {
-				await rest.put(
-					Routes.applicationGuildCommands(clientId, guildId),
-					{ body: commands },
-				);
-				console.log(`Successfully reloaded ${numCommands} application (/) command(s) to guild ${guildId}.`);
-			}
-
-		} else if (env_state === 'prod') {
-			// Deploy commands globally to production
-			await rest.put(
-				Routes.applicationCommands(clientId),
-				{ body: commands },
-			);
-			console.log(`Successfully reloaded ${numCommands} application (/) command(s) globally.`);
-		} else {
-			throw new Error(`Invalid environment state: ${env_state}. Must be 'dev' or 'prod'.`);
-		}
+		console.log(`Successfully reloaded ${numCommands} global application (/) command(s).`);
 	} catch (error) {
 		console.error(error);
 	}

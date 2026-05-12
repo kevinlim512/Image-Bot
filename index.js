@@ -10,15 +10,22 @@ const { MessageButton } = require('discord.js');
 // Create a new client instance
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 
-// Read the command files
 client.commands = new Collection();
-const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+const commandDirectories = ['./commands', './commands-dev'];
 
-for (const file of commandFiles) {
-	const command = require(`./commands/${file}`);
-	// Set a new item in the Collection
-	// With the key as the command name and the value as the exported module
-	client.commands.set(command.data.name, command);
+for (const directory of commandDirectories) {
+	if (!fs.existsSync(directory)) {
+		continue;
+	}
+
+	const commandFiles = fs.readdirSync(directory).filter(file => file.endsWith('.js'));
+
+	for (const file of commandFiles) {
+		const command = require(`${directory}/${file}`);
+		// Set a new item in the Collection
+		// With the key as the command name and the value as the exported module
+		client.commands.set(command.data.name, command);
+	}
 }
 
 // Read the event files for event handling
