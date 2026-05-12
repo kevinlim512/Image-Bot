@@ -37,11 +37,11 @@ If you only plan on hosting a development bot and don't intend on distributing i
     5. Exit settings
 6. Right-click on your server from the left and click "Copy ID." This will be the `guildId` later.
 
-### 🔍 Getting a Serper API key
-This bot now uses the Serper Images API for image search.
-1. Create an account at [serper.dev](https://serper.dev/).
-2. Copy your API key from the Serper dashboard.
-3. Store that key as `SERPER_API_KEY` in your local `.env` file.
+### 🔍 Getting a Brave Search API key
+This bot now uses the Brave Search Images API for image search.
+1. Create an account at [Brave Search API](https://brave.com/search/api/).
+2. Generate or copy your API key from the Brave dashboard.
+3. Store that key as `BRAVE_SEARCH_API_KEY` in your local `.env` file.
 
 ### 🛠 Getting set up
 1. Clone the repository
@@ -50,7 +50,7 @@ This bot now uses the Serper Images API for image search.
     CLIENT_ID=<clientId>
     GUILD_ID=<guildId>
     TOKEN=<token>
-    SERPER_API_KEY=<serper_api_key>
+    BRAVE_SEARCH_API_KEY=<brave_search_api_key>
     ```
     _Note: these keys should be from your development bot/application and server. Your production keys should be added as repository secrets by following the steps in [**Deploying your Commands**](#deploying-your-commands) below._
 3. If it is not already there, create a new file called `.gitignore` and include:

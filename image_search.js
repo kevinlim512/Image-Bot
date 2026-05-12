@@ -1,5 +1,7 @@
 require('dotenv').config();
 const https = require('https');
+const { URL } = require('url');
+const zlib = require('zlib');
 
 const args = process.argv.slice(2);
 const queryArg = args[0];
@@ -27,33 +29,53 @@ class SearchResult {
     }
 }
 
-function serperRequest(path, payload) {
+function braveRequest(path, params) {
     return new Promise((resolve, reject) => {
-        const body = JSON.stringify(payload);
+        const url = new URL(`https://api.search.brave.com${path}`);
+        Object.entries(params).forEach(([key, value]) => {
+            url.searchParams.set(key, value);
+        });
+
         const req = https.request(
             {
-                hostname: 'google.serper.dev',
-                path,
-                method: 'POST',
+                hostname: url.hostname,
+                path: `${url.pathname}${url.search}`,
+                method: 'GET',
                 headers: {
-                    'X-API-KEY': process.env.SERPER_API_KEY,
-                    'Content-Type': 'application/json',
-                    'Content-Length': Buffer.byteLength(body),
+                    'Accept': 'application/json',
+                    'Accept-Encoding': 'gzip',
+                    'X-Subscription-Token': process.env.BRAVE_SEARCH_API_KEY,
                 },
             },
             (res) => {
-                let data = '';
+                const chunks = [];
 
                 res.on('data', (chunk) => {
-                    data += chunk;
+                    chunks.push(chunk);
                 });
 
                 res.on('end', () => {
+                    const buffer = Buffer.concat(chunks);
+                    const encoding = res.headers['content-encoding'];
+
                     try {
-                        const parsed = JSON.parse(data);
+                        let data;
+
+                        if (encoding === 'gzip') {
+                            data = zlib.gunzipSync(buffer).toString('utf8');
+                        } else if (encoding === 'br') {
+                            data = zlib.brotliDecompressSync(buffer).toString('utf8');
+                        } else if (encoding === 'deflate') {
+                            data = zlib.inflateSync(buffer).toString('utf8');
+                        } else {
+                            data = buffer.toString('utf8');
+                        }
+
+                        const parsed = data ? JSON.parse(data) : {};
 
                         if (res.statusCode < 200 || res.statusCode >= 300) {
-                            reject(new Error(parsed.message || `Serper request failed with status ${res.statusCode}`));
+                            const apiError = parsed.error && (parsed.error.detail || parsed.error.msg || parsed.error.message);
+                            reject(new Error(apiError || `Brave request failed with status ${res.statusCode}`));
                             return;
                         }
 
@@ -66,35 +88,54 @@ function serperRequest(path, payload) {
         );
 
         req.on('error', reject);
-        req.write(body);
         req.end();
     });
 }
 
+function deriveDisplayDomain(sourceLink) {
+    if (!sourceLink) {
+        return 'Unknown source';
+    }
+
+    try {
+        return new URL(sourceLink).hostname;
+    } catch (error) {
+        return sourceLink;
+    }
+}
+
 function normalizeImageResult(result) {
+    const sourceLink = result.url || result.page_url;
+    const publisher = result.meta_url;
+    const displayDomain = publisher && (publisher.hostname || publisher.netloc || publisher.display_url);
+    const thumbnailUrl = typeof result.thumbnail === 'string' ? result.thumbnail : result.thumbnail && result.thumbnail.src;
+    const originalImageUrl = result.properties && result.properties.url;
+
     return {
-        title: result.title || result.source || 'Image result',
-        imageUrl: result.imageUrl,
-        sourceLink: result.link,
-        displayDomain: result.domain || result.source || result.link,
+        title: result.title || result.source || result.description || 'Image result',
+        imageUrl: thumbnailUrl || originalImageUrl,
+        sourceLink,
+        displayDomain: displayDomain || deriveDisplayDomain(sourceLink),
     };
 }
 
 async function search(query) {
-    if (!process.env.SERPER_API_KEY) {
-        throw new Error('Missing SERPER_API_KEY');
+    if (!process.env.BRAVE_SEARCH_API_KEY) {
+        throw new Error('Missing BRAVE_SEARCH_API_KEY');
     }
 
-    const res = await serperRequest('/images', {
+    const res = await braveRequest('/res/v1/images/search', {
         q: query,
-        num: 10,
-        gl: 'us',
-        hl: 'en',
+        count: 10,
+        country: 'US',
+        search_lang: 'en',
+        spellcheck: true,
+        safesearch: 'off',
     });
 
-    const images = (res.images || [])
-        .filter((result) => result.imageUrl && result.link)
-        .map(normalizeImageResult);
+    const images = (res.results || [])
+        .map(normalizeImageResult)
+        .filter((result) => result.imageUrl && result.sourceLink);
 
     if (images.length === 0) {
         throw new Error(`No image results found for "${query}"`);
