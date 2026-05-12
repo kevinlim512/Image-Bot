@@ -1,6 +1,6 @@
 # Image Search Bot for Discord
 
-A Discord bot that allows you to search Google Images without leaving your channel! To search, enter `/search` in a Discord channel followed by the term you want to search for. The bot will return the first image matching your search term.
+A Discord bot that allows you to search for images without leaving your channel. To search, enter `/img` in a Discord channel followed by the term you want to search for. The bot will return the first image matching your search term.
 
 <div align="center">
     <a href="https://discord.com/api/oauth2/authorize?client_id=950561099453968394&permissions=0&scope=bot%20applications.commands">
@@ -37,26 +37,20 @@ If you only plan on hosting a development bot and don't intend on distributing i
     5. Exit settings
 6. Right-click on your server from the left and click "Copy ID." This will be the `guildId` later.
 
-### 🔍 Making a Custom Google Search Engine
-As Google no longer allows direct APIs for Search, you will need to create your own [Programmable Search Engine](https://developers.google.com/custom-search/) and create an API to make use of it.
-1. Login to the [Programmable Search Engine Control Panel](https://programmablesearchengine.google.com/) and create a new search engine.
-2. Give your search engine a name, and select `Search the entire`. Be sure to turn on `Image search` and (optionally, but recommended) `SafeSearch`.
-3. Once created, make a note of the Search engine ID. This will be `cx` later.
-
-The next step is to generate an API key for your search engine.
-1. Visit [this page](https://developers.google.com/custom-search/v1/overview#api_key) and click blue button that says **Get a Key**.
-2. In the menu that appears, click **+ Create a new project** and enter a project name (ex. Discord Image Search Bot). Then click **Next**.
-3. Your API key will be displayed. Make a note of this, as it will be `auth` later. 
+### 🔍 Getting a Serper API key
+This bot now uses the Serper Images API for image search.
+1. Create an account at [serper.dev](https://serper.dev/).
+2. Copy your API key from the Serper dashboard.
+3. Store that key as `SERPER_API_KEY` in your local `.env` file.
 
 ### 🛠 Getting set up
 1. Clone the repository
-2. Create a new file called  `.env` in the root of the repository and enter the following fields you took note of earlier. You can also retrieve them from the [Discord Developer Portal](https://discord.com/developers/), [Programmable Search Engine Control Panel](https://programmablesearchengine.google.com/), and [Google Cloud API Manager](https://console.cloud.google.com/apis).
+2. Create a new file called  `.env` in the root of the repository and enter the following fields you took note of earlier.
     ```
     CLIENT_ID=<clientId>
     GUILD_ID=<guildId>
     TOKEN=<token>
-    GG_API_KEY=<auth>
-    GG_CX=<cx>
+    SERPER_API_KEY=<serper_api_key>
     ```
     _Note: these keys should be from your development bot/application and server. Your production keys should be added as repository secrets by following the steps in [**Deploying your Commands**](#deploying-your-commands) below._
 3. If it is not already there, create a new file called `.gitignore` and include:

@@ -5,7 +5,7 @@ const { Client, Collection, Intents } = require('discord.js');
 const config = require('./env-var');
 const token = config.getConfig().token;
 const resultMap = require('./resultMap');
-const { MessageEmbed, MessageActionRow, MessageButton } = require('discord.js');
+const { MessageButton } = require('discord.js');
 
 // Create a new client instance
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
@@ -50,7 +50,13 @@ client.on('interactionCreate', async interaction => {
 			const messageID = message.id;
 			
 			// Get the search result for that message from the resultMap
-			const searchResult = await resultMap.get(messageID);
+			const searchData = await resultMap.get(messageID);
+			if (!searchData) {
+				await interaction.reply({ content: 'The results for this message are no longer available.', ephemeral: true });
+				return;
+			}
+
+			const { query, searchResult } = searchData;
 			if (interaction.customId === 'prev') {
 				searchResult.prevSearch();
 			} else if (interaction.customId === 'next') {
@@ -58,22 +64,21 @@ client.on('interactionCreate', async interaction => {
 			}
 
 			// Update the embed with information from new image
-			const oldEmbed = message.embeds[0];
-			const newEmbed = new MessageEmbed(oldEmbed)
-				.setDescription(`Result ${searchResult.currentResult + 1} of ${searchResult.resultArray.length}`)
-				.spliceFields(0, 1, { name: searchResult.currentSearch().title, value: searchResult.currentSearch().displayLink })
-				.setImage(await searchResult.currentSearch().link);
+			const command = client.commands.get('img');
+			const newEmbed = command.buildSearchEmbed(query, searchResult);
 			
-			// Update the "View Original" button to point to the new image
+			// Update the source page button to point to the new result
+			const current = searchResult.currentSearch();
 			const actionRow = message.components[0];
 			actionRow.spliceComponents(2, 1, new MessageButton()
-				.setLabel('View Original')
+				.setLabel('Open Source Page')
 				.setStyle('LINK')
-				.setURL(searchResult.currentSearch().image.contextLink)
+				.setURL(current.sourceLink)
 			);
 
 			// Edit the original message
 			await interaction.update({ embeds: [newEmbed], components: [actionRow] });
+			await resultMap.set(messageID, { query, searchResult });
 			return;
 		}
 
