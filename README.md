@@ -48,11 +48,11 @@ This bot now uses the Brave Search Images API for image search.
 2. Create a new file called  `.env` in the root of the repository and enter the following fields you took note of earlier.
     ```
     CLIENT_ID=<clientId>
-    GUILD_ID=<guildId>
+    GUILD_IDS=<guildId1>,<guildId2>
     TOKEN=<token>
     BRAVE_SEARCH_API_KEY=<brave_search_api_key>
     ```
-    _Note: these keys should be from your development bot/application and server. Your production keys should be added as repository secrets by following the steps in [**Deploying your Commands**](#deploying-your-commands) below._
+    _Note: these keys should be from your development bot/application and server(s). `GUILD_ID` is still supported for a single dev server, but `GUILD_IDS` is preferred for multiple dev servers. Your production keys should be added as repository secrets by following the steps in [**Deploying your Commands**](#deploying-your-commands) below._
 3. If it is not already there, create a new file called `.gitignore` and include:
       ```
       node_modules/**
@@ -65,12 +65,12 @@ Commands can be created and edited in the [`commands`](commands) folder using th
 
 The `commands` folder is meant to include only commands meant for production. To test and develop new commands, create them in the [`commands-dev`](commands-dev) folder instead. Once they are ready to be pushed to production, they should be moved to the `commands` folder. Any command files that remain in `commands-dev` will not be pushed to production.
 
-Any time new commands are created, they need to be registered. To do so, run `npm run commands`. This will deploy the commands to your development server only. See [**Deploying your Commands**](#deploying-your-commands) below for more information.
+Any time new commands are created, they need to be registered. To do so, run `npm run commands`. This will deploy the commands to your configured development server(s). See [**Deploying your Commands**](#deploying-your-commands) below for more information.
 
 ### 🤖 Starting the bot
 To run the bot, run the command `npm start`. This will run the bot in a production state, meaning it will not deploy your commands for you. To deploy your global commands for production, see [**Deploying your Commands**](#📤-deploying-your-commands) below for more information.
 
-To start the development bot, use `npm run dev`. This will start the bot locally on your machine and also automatically deploy the commands to your development server.
+To start the development bot, use `npm run dev`. This will start the bot locally on your machine and also automatically deploy the commands to your configured development server(s).
 
 To stop the bot, press `CTRL-C`
 
@@ -109,6 +109,6 @@ The [deploy-commands.yml](.github/workflows/deploy-commands.yml) file contains t
 To disable this functionality, you can delete the [deploy-commands.yml](.github/workflows/deploy-commands.yml) file and commit the change to `main`. Otherwise, this can remain and you can still deploy commands manually (see below) without causing any conflicts.
 
 #### 📬 Manually Deploy Commands
-If you are developing locally and would like to test commands without committing them, you can do so by running `npm run commands` command from the root of your directory. A confirmation message will appear in the console. If you use `npm run dev` the development commands are automatically deployed and you do not need to run this command.
+If you are developing locally and would like to test commands without committing them, you can do so by running `npm run commands` command from the root of your directory. A confirmation message will appear in the console. If you use `npm run dev` the development commands are automatically deployed to every guild listed in `GUILD_IDS` and you do not need to run this command.
 
 If you choose to not deploy your production commands automatically, you can manually do so by running `node deploy-commands.js prod`. This will globally deploy your bots production commands from the `commands` folder across Discord. It may take up to an hour for the updates to be reflected due to [Discord caching global commands](https://canary.discord.com/developers/docs/interactions/application-commands#making-a-global-command).

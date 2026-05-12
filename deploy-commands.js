@@ -4,7 +4,7 @@ const { Routes } = require('discord-api-types/v9');
 // Read environment variables
 const config = require('./env-var');
 const clientId = config.getConfig().clientId;
-const guildId = config.getConfig().guildId;
+const guildIds = config.getConfig().guildIds;
 const token = config.getConfig().token;
 // Get arguments from command input to determine environment state
 const args = process.argv.slice(2);
@@ -35,13 +35,18 @@ const rest = new REST({ version: '9' }).setToken(token);
 		console.log(`Started refreshing ${env_state} application (/) commands with ${numCommands} command(s).`);
 
 		if (env_state === 'dev') {
-			// Deploy commands to the development guild immediately
-			await rest.put(
-				Routes.applicationGuildCommands(clientId, guildId),
-				{ body: commands },
+			if (guildIds.length === 0) {
+				throw new Error('No GUILD_IDS or GUILD_ID configured for dev command deployment.');
+			}
 
-			);
-			console.log(`Successfully reloaded ${numCommands} application (/) command(s) to guild ${guildId}.`);
+			// Deploy commands to each development guild immediately
+			for (const guildId of guildIds) {
+				await rest.put(
+					Routes.applicationGuildCommands(clientId, guildId),
+					{ body: commands },
+				);
+				console.log(`Successfully reloaded ${numCommands} application (/) command(s) to guild ${guildId}.`);
+			}
 
 		} else if (env_state === 'prod') {
 			// Deploy commands globally to production
